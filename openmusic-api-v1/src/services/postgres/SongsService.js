@@ -24,7 +24,7 @@ class SongsService {
     const result = await this._pool.query(query);
 
     if (!result.rows[0].id) {
-      throw new InvariantError('Failed to add song');
+      throw new InvariantError('Failed to add song', 500);
     }
 
     return result.rows[0].id;
@@ -68,20 +68,20 @@ class SongsService {
   }) {
     const updatedAt = new Date().toISOString();
     const query = {
-      text: 'UPDATE songs SET title = $1, year = $2, genre = $3, performer = $4, duration = $5, album_id = $6, updated_at = $7 WHERE id = $8',
+      text: 'UPDATE songs SET title = $1, year = $2, genre = $3, performer = $4, duration = $5, album_id = $6, updated_at = $7 WHERE id = $8 RETURNING id',
       values: [title, year, genre, performer, duration, albumId, updatedAt, id],
     };
 
     const result = await this._pool.query(query);
 
     if (result.rowCount === 0) {
-      throw new NotFoundError('Failed to update song detail. Song ID not found');
+      throw new NotFoundError('Failed to update song details. Song ID not found');
     }
   }
 
   async deleteSongById(id) {
     const query = {
-      text: 'DELETE FROM songs WHERE id = $1',
+      text: 'DELETE FROM songs WHERE id = $1 RETURNING id',
       values: [id],
     };
 
