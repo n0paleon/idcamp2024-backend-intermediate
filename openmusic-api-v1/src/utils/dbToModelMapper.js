@@ -1,19 +1,6 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 
-const mapAlbumToModel = ({
-  id,
-  name,
-  year,
-  created_at,
-  updated_at,
-}) => ({
-  id,
-  name,
-  year,
-});
-
-const mapSongToModel = ({
+const mapSongToSongDetailsModel = ({
   id,
   title,
   year,
@@ -21,8 +8,6 @@ const mapSongToModel = ({
   performer,
   duration,
   album_id,
-  created_at,
-  updated_at,
 }) => ({
   id,
   title,
@@ -34,6 +19,5 @@ const mapSongToModel = ({
 });
 
 module.exports = {
-  mapAlbumToModel,
-  mapSongToModel,
+  mapSongToSongDetailsModel,
 };

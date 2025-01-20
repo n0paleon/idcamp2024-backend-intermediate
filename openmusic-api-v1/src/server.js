@@ -2,8 +2,10 @@ require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 
 const AlbumsService = require('./services/postgres/AlbumsService');
+const SongsService = require('./services/postgres/SongsService');
 const Validator = require('./validator');
-const albums = require('./api/albums');
+const albumsPlugin = require('./api/albums');
+const songsPlugin = require('./api/songs');
 const ClientError = require('./exceptions/ClientError');
 
 const init = async () => {
@@ -18,12 +20,20 @@ const init = async () => {
   });
 
   const albumsService = new AlbumsService();
+  const songsService = new SongsService();
 
   await server.register([
     {
-      plugin: albums,
+      plugin: albumsPlugin,
       options: {
         service: albumsService,
+        validator: Validator,
+      },
+    },
+    {
+      plugin: songsPlugin,
+      options: {
+        service: songsService,
         validator: Validator,
       },
     },
@@ -45,9 +55,16 @@ const init = async () => {
       return errResponse;
     }
 
-    if (response.isBoom && response.output.statusCode === 404) {
-      payload.message = 'Resource Not Found';
-      errResponse.code(404);
+    if (response.isBoom) {
+      if (response.output.statusCode === 404) {
+        payload.message = 'Resource Not Found';
+        errResponse.code(404);
+      } else {
+        payload.status = 'error';
+        payload.message = 'Internal Server Error';
+        errResponse.code(500);
+      }
+
       return errResponse;
     }
 
