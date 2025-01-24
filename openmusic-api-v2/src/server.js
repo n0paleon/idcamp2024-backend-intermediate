@@ -35,6 +35,8 @@ const init = async () => {
           status: 'error',
           message: 'Internal Server Error',
         }).code(500);
+
+        console.log(response);
       }
     } else {
       responseObject = h.response(response);

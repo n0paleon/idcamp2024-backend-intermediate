@@ -14,11 +14,12 @@ class SongsService {
   }) {
     const id = nanoid(16);
     const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
+    // eslint-disable-next-line no-param-reassign
+    albumId = albumId || null;
 
     const query = {
       text: 'INSERT INTO songs VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
-      values: [id, title, year, genre, performer, duration, albumId, createdAt, updatedAt],
+      values: [id, title, year, genre, performer, duration, albumId, createdAt, createdAt],
     };
 
     const result = await this._pool.query(query);
@@ -89,6 +90,19 @@ class SongsService {
 
     if (result.rowCount === 0) {
       throw new NotFoundError('Failed to delete song. Song ID not found');
+    }
+  }
+
+  async verifySongId(id) {
+    const query = {
+      text: 'SELECT id FROM songs WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Song ID not found');
     }
   }
 }

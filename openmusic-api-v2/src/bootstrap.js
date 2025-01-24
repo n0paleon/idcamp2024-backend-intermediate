@@ -20,6 +20,11 @@ const AuthenticationsService = require('./services/postgres/AuthenticationsServi
 const authenticationsPlugin = require('./api/authentications');
 const AuthenticationsValidator = require('./validator/authentications');
 
+// playlists
+const PlaylistsService = require('./services/postgres/PlaylistsService');
+const playlistsPlugin = require('./api/playlists');
+const PlaylistsValidator = require('./validator/playlists');
+
 const TokenManager = require('./tokenize/TokenManager');
 
 module.exports = async (server) => {
@@ -28,6 +33,7 @@ module.exports = async (server) => {
   const songsService = new SongsService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
+  const playlistsService = new PlaylistsService(songsService);
 
   await server.register([{ plugin: Jwt }]);
 
@@ -76,6 +82,13 @@ module.exports = async (server) => {
         usersService,
         tokenManager: TokenManager,
         validator: AuthenticationsValidator,
+      },
+    },
+    {
+      plugin: playlistsPlugin,
+      options: {
+        service: playlistsService,
+        validator: PlaylistsValidator,
       },
     },
   ]);

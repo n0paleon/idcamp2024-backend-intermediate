@@ -4,45 +4,38 @@
  * @returns {Promise<void> | void}
  */
 exports.up = (pgm) => {
-  pgm.createTable('songs', {
+  pgm.createTable('playlists', {
     id: {
       type: 'VARCHAR(50)',
       primaryKey: true,
     },
-    title: {
-      type: 'VARCHAR(100)',
+    name: {
+      type: 'VARCHAR(255)',
       notNull: true,
     },
-    year: {
-      type: 'INTEGER',
-      notNull: true,
-    },
-    genre: {
+    owner: {
       type: 'VARCHAR(50)',
       notNull: true,
+      references: 'users(id)',
     },
-    performer: {
-      type: 'VARCHAR(100)',
-      notNull: true,
-    },
-    duration: {
-      type: 'INTEGER',
-      default: 0,
-    },
-    album_id: {
+  });
+
+  pgm.createTable('playlist_songs', {
+    id: {
       type: 'VARCHAR(50)',
-      nullable: true,
-      default: null,
-      references: 'albums(id)',
-      onDelete: 'SET NULL',
+      primaryKey: true,
     },
-    created_at: {
-      type: 'timestamp',
+    playlist_id: {
+      type: 'VARCHAR(50)',
+      references: 'playlists(id)',
       notNull: true,
-      default: pgm.func('NOW()'),
+      onDelete: 'CASCADE',
     },
-    updated_at: {
-      type: 'timestamp',
+    song_id: {
+      type: 'VARCHAR(255)',
+      references: 'songs(id)',
+      notNull: true,
+      onDelete: 'CASCADE',
     },
   });
 };
@@ -53,7 +46,8 @@ exports.up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 exports.down = (pgm) => {
-  pgm.dropTable('songs', {
+  pgm.dropTable('playlists', {
     cascade: true,
   });
+  pgm.dropTable('playlist_songs');
 };
