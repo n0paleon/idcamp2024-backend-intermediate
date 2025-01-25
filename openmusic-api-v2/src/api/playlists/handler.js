@@ -73,28 +73,47 @@ class PlaylistsHandler {
   }
 
   async postSongToPlaylistHandler(request, h) {
-    this._validator.validatePostSongToPlaylistPayload(request.payload);
+    try {
+      this._validator.validatePostSongToPlaylistPayload(request.payload);
 
-    const { id } = request.params;
-    const { userId } = request.auth.credentials;
-    const { songId } = request.payload;
+      const { id } = request.params;
+      const { userId } = request.auth.credentials;
+      const { songId } = request.payload;
 
-    await this._service.verifyPlaylistOwner(id, userId);
-    await this._service.addSongToPlaylist(id, songId);
+      await this._service.verifyPlaylistAccess(id, userId);
+      await this._service.addSongToPlaylist(id, songId);
 
-    const response = h.response({
-      status: 'success',
-      message: 'Song added to playlist successfully',
-    });
-    response.code(201);
-    return response;
+      const response = h.response({
+        status: 'success',
+        message: 'Song added to playlist successfully',
+      });
+      response.code(201);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
+      }
+
+      const response = h.response({
+        status: 'error',
+        message: 'Internal error occurred',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
+    }
   }
 
   async getSongsFromPlaylistHandler(request) {
     const { id } = request.params;
     const { userId } = request.auth.credentials;
 
-    await this._service.verifyPlaylistOwner(id, userId);
+    await this._service.verifyPlaylistAccess(id, userId);
     const playlist = await this._service.getPlaylistById(id);
     playlist.songs = await this._service.getSongsFromPlaylist(id);
 
@@ -112,7 +131,7 @@ class PlaylistsHandler {
     const { userId } = request.auth.credentials;
     const { songId } = request.payload;
 
-    await this._service.verifyPlaylistOwner(id, userId);
+    await this._service.verifyPlaylistAccess(id, userId);
     await this._service.deleteSongFromPlaylist(id, songId);
 
     return {

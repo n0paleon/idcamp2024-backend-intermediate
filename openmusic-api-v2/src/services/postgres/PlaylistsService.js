@@ -5,9 +5,10 @@ const NotFoundError = require('../../exceptions/NotFoundError');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
 
 class PlaylistsService {
-  constructor(songsService) {
+  constructor(songsService, collaborationsService) {
     this._pool = new Pool();
     this._songsService = songsService;
+    this._collaborationsService = collaborationsService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -27,14 +28,15 @@ class PlaylistsService {
     return result.rows[0].id;
   }
 
-  async getPlaylists(owner) {
+  async getPlaylists(userId) {
     const query = {
       text: `
       SELECT playlists.id, playlists.name, users.username FROM playlists
-      JOIN users ON playlists.owner = users.id
-      WHERE playlists.owner = $1
+      LEFT JOIN users ON playlists.owner = users.id
+      LEFT JOIN collaborations ON playlists.id = collaborations.playlist_id
+      WHERE playlists.owner = $1 OR collaborations.user_id = $1
       `,
-      values: [owner],
+      values: [userId],
     };
     const result = await this._pool.query(query);
 
@@ -46,7 +48,7 @@ class PlaylistsService {
       text: `
       SELECT playlists.id, playlists.name, users.username
       FROM playlists
-      JOIN users ON playlists.owner = users.id
+      LEFT JOIN users ON playlists.owner = users.id
       WHERE playlists.id = $1 LIMIT 1
       `,
       values: [id],
@@ -55,7 +57,7 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (result.rowCount === 0) {
-      throw new NotFoundError('Failed to get playlists. Playlist ID not found');
+      throw new NotFoundError('Failed to get playlists. Playlist not found');
     }
 
     return result.rows[0];
@@ -70,7 +72,7 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (result.rowCount === 0) {
-      throw new NotFoundError('Failed to delete playlist. Playlist ID not found');
+      throw new NotFoundError('Failed to delete playlist. Playlist not found');
     }
   }
 
@@ -85,7 +87,7 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (result.rowCount === 0) {
-      throw new NotFoundError('Failed to song to playlist. Playlist ID not found');
+      throw new NotFoundError('Failed to song to playlist. Playlist not found');
     }
   }
 
@@ -115,7 +117,7 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (result.rowCount === 0) {
-      throw new NotFoundError('Failed to delete song from playlist. Playlist ID not found');
+      throw new NotFoundError('Failed to delete song from playlist. Playlist not found');
     }
   }
 
@@ -128,13 +130,29 @@ class PlaylistsService {
     const result = await this._pool.query(query);
 
     if (result.rowCount === 0) {
-      throw new NotFoundError('Playlist ID not found');
+      throw new NotFoundError('Playlist not found');
     }
 
     const playlist = result.rows[0];
 
     if (playlist.owner !== userId) {
       throw new AuthorizationError('You do not have permission to access this playlist');
+    }
+  }
+
+  async verifyPlaylistAccess(playlistId, userId) {
+    try {
+      await this.verifyPlaylistOwner(playlistId, userId);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+
+      try {
+        await this._collaborationsService.verifyCollaborator(playlistId, userId);
+      } catch {
+        throw error;
+      }
     }
   }
 }

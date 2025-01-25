@@ -2,28 +2,33 @@ const Jwt = require('@hapi/jwt');
 
 // albums
 const AlbumsService = require('./services/postgres/AlbumsService');
-const albumsPlugin = require('./api/albums');
+const AlbumsPlugin = require('./api/albums');
 const AlbumsValidator = require('./validator/albums');
 
 // songs
 const SongsService = require('./services/postgres/SongsService');
-const songsPlugin = require('./api/songs');
+const SongsPlugin = require('./api/songs');
 const SongsValidator = require('./validator/songs');
 
 // users
 const UsersService = require('./services/postgres/UsersService');
-const usersPlugin = require('./api/users');
+const UsersPlugin = require('./api/users');
 const UsersValidator = require('./validator/users');
 
 // authentications
 const AuthenticationsService = require('./services/postgres/AuthenticationsService');
-const authenticationsPlugin = require('./api/authentications');
+const AuthenticationsPlugin = require('./api/authentications');
 const AuthenticationsValidator = require('./validator/authentications');
 
 // playlists
 const PlaylistsService = require('./services/postgres/PlaylistsService');
-const playlistsPlugin = require('./api/playlists');
+const PlaylistsPlugin = require('./api/playlists');
 const PlaylistsValidator = require('./validator/playlists');
+
+// collaborations
+const CollaborationsService = require('./services/postgres/CollaborationsService');
+const CollaborationsPlugin = require('./api/collaborations');
+const CollaborationsValidator = require('./validator/collaborations');
 
 const TokenManager = require('./tokenize/TokenManager');
 
@@ -33,7 +38,8 @@ module.exports = async (server) => {
   const songsService = new SongsService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
-  const playlistsService = new PlaylistsService(songsService);
+  const collaborationsService = new CollaborationsService();
+  const playlistsService = new PlaylistsService(songsService, collaborationsService);
 
   await server.register([{ plugin: Jwt }]);
 
@@ -55,28 +61,28 @@ module.exports = async (server) => {
 
   await server.register([
     {
-      plugin: albumsPlugin,
+      plugin: AlbumsPlugin,
       options: {
         service: albumsService,
         validator: AlbumsValidator,
       },
     },
     {
-      plugin: songsPlugin,
+      plugin: SongsPlugin,
       options: {
         service: songsService,
         validator: SongsValidator,
       },
     },
     {
-      plugin: usersPlugin,
+      plugin: UsersPlugin,
       options: {
         service: usersService,
         validator: UsersValidator,
       },
     },
     {
-      plugin: authenticationsPlugin,
+      plugin: AuthenticationsPlugin,
       options: {
         authenticationsService,
         usersService,
@@ -85,10 +91,19 @@ module.exports = async (server) => {
       },
     },
     {
-      plugin: playlistsPlugin,
+      plugin: PlaylistsPlugin,
       options: {
         service: playlistsService,
         validator: PlaylistsValidator,
+      },
+    },
+    {
+      plugin: CollaborationsPlugin,
+      options: {
+        collaborationsService,
+        playlistsService,
+        usersService,
+        validator: CollaborationsValidator,
       },
     },
   ]);
