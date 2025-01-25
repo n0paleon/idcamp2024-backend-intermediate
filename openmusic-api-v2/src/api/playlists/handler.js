@@ -82,6 +82,12 @@ class PlaylistsHandler {
 
       await this._service.verifyPlaylistAccess(id, userId);
       await this._service.addSongToPlaylist(id, songId);
+      await this._service.addPlaylistActivity({
+        playlistId: id,
+        songId,
+        userId,
+        action: 'add',
+      });
 
       const response = h.response({
         status: 'success',
@@ -99,9 +105,10 @@ class PlaylistsHandler {
         return response;
       }
 
+      // Server ERROR
       const response = h.response({
         status: 'error',
-        message: 'Internal error occurred',
+        message: 'An error occurred',
       });
       response.code(500);
       console.error(error);
@@ -133,10 +140,33 @@ class PlaylistsHandler {
 
     await this._service.verifyPlaylistAccess(id, userId);
     await this._service.deleteSongFromPlaylist(id, songId);
+    await this._service.addPlaylistActivity({
+      playlistId: id,
+      songId,
+      userId,
+      action: 'delete',
+    });
 
     return {
       status: 'success',
       message: 'Song deleted successfully',
+    };
+  }
+
+  async getPlaylistActivitiesHandler(request) {
+    const { id } = request.params;
+    const { userId } = request.auth.credentials;
+
+    await this._service.verifyPlaylistAccess(id, userId);
+
+    const activities = await this._service.getPlaylistActivities(id);
+
+    return {
+      status: 'success',
+      data: {
+        playlistId: id,
+        activities,
+      },
     };
   }
 }

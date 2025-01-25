@@ -1,4 +1,4 @@
-const { PostCollaborationSchema, DeleteCollaborationSchema } = require("./schema");
+const { PostCollaborationSchema, DeleteCollaborationSchema } = require('./schema');
 const InvariantError = require('../../exceptions/InvariantError');
 
 const CollaborationsValidator = {

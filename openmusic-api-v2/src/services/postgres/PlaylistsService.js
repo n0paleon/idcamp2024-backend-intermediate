@@ -155,6 +155,40 @@ class PlaylistsService {
       }
     }
   }
+
+  async addPlaylistActivity({
+    playlistId, songId, userId, action,
+  }) {
+    const id = nanoid(16);
+    const timestamp = new Date().toISOString();
+
+    const query = {
+      text: 'INSERT INTO playlist_song_activities VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      values: [id, playlistId, songId, userId, action, timestamp],
+    };
+
+    await this._pool.query(query);
+  }
+
+  async getPlaylistActivities(playlistId) {
+    const query = {
+      text: `
+      SELECT users.username, songs.title, psa.action, psa.time
+      FROM playlist_song_activities psa
+      JOIN
+          users ON psa.user_id = users.id
+      JOIN
+          songs ON psa.song_id = songs.id
+      WHERE playlist_id = $1
+      ORDER BY psa.time ASC
+      `,
+      values: [playlistId],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rows;
+  }
 }
 
 module.exports = PlaylistsService;

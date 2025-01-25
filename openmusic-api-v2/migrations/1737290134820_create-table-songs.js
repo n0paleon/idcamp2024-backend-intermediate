@@ -36,14 +36,6 @@ exports.up = (pgm) => {
       references: 'albums(id)',
       onDelete: 'SET NULL',
     },
-    created_at: {
-      type: 'timestamp',
-      notNull: true,
-      default: pgm.func('NOW()'),
-    },
-    updated_at: {
-      type: 'timestamp',
-    },
   });
 };
 

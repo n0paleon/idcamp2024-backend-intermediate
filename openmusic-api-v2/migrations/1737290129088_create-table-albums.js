@@ -17,14 +17,6 @@ exports.up = (pgm) => {
       type: 'INTEGER',
       notNull: true,
     },
-    created_at: {
-      type: 'timestamp',
-      notNull: true,
-      default: pgm.func('NOW()'),
-    },
-    updated_at: {
-      type: 'timestamp',
-    },
   });
 };
 
